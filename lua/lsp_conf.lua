@@ -99,6 +99,11 @@ vim.lsp.config("*", {
   },
 })
 
+local mason_available, mason = pcall(require, "mason")
+if mason_available then
+  mason.setup()
+end
+
 -- A mapping from lsp server name to the executable name
 local enabled_lsp_servers = {
   bashls = { exe = "bash-language-server", optional = true },
@@ -112,28 +117,42 @@ local enabled_lsp_servers = {
   -- golangci-lint also needs to be installed: https://github.com/golangci/golangci-lint
   golangci_lint_ls = { exe = "golangci-lint-langserver", optional = true },
   gopls = { exe = "gopls", optional = false },
+  -- kotlin_lsp (JetBrains intellij-server) is managed by the kotlin.nvim plugin,
+  -- which enables the client itself on FileType kotlin. Do not enable it here too,
+  -- or two same-named clients race to start. kotlin_language_server below stays as
+  -- a fallback for when intellij-server is unavailable.
+  kotlin_language_server = {
+    exe = "kotlin-language-server",
+    optional = true,
+    condition = function()
+      return not utils.executable("intellij-server")
+    end,
+  },
 
   lua_ls = { exe = "lua-language-server", optional = false },
 
-  pyright = { exe = "delance-langserver", optional = false },
+  pyright = { exe = "pyright", optional = false },
   ruff = { exe = "ruff", optional = false },
 
+  sourcekit = { exe = "sourcekit-lsp", optional = true },
   vimls = { exe = "vim-language-server", optional = true },
   yamlls = { exe = "yaml-language-server", optional = true },
 }
 
 for server_name, server_info in pairs(enabled_lsp_servers) do
-  if utils.executable(server_info.exe) then
-    vim.lsp.enable(server_name)
-  else
-    -- only warn about missing non-optional LSP to avoid noise
-    if not server_info.optional then
-      local msg = string.format(
-        "Executable '%s' for LSP server '%s' not found! LSP Server will not be enabled",
-        server_info.exe,
-        server_name
-      )
-      vim.notify(msg, vim.log.levels.WARN, { title = "Nvim-config" })
+  if server_info.condition == nil or server_info.condition() then
+    if utils.executable(server_info.exe) then
+      vim.lsp.enable(server_name)
+    else
+      -- only warn about missing non-optional LSP to avoid noise
+      if not server_info.optional then
+        local msg = string.format(
+          "Executable '%s' for LSP server '%s' not found! LSP Server will not be enabled",
+          server_info.exe,
+          server_name
+        )
+        vim.notify(msg, vim.log.levels.WARN, { title = "Nvim-config" })
+      end
     end
   end
 end
@@ -142,6 +161,10 @@ end
 
 vim.api.nvim_create_user_command("LspInfo", "checkhealth vim.lsp", {
   desc = "Show LSP Info",
+})
+
+vim.api.nvim_create_user_command("AndroidLspInstall", "MasonInstall jdtls kotlin-lsp", {
+  desc = "Install Android Java/Kotlin LSP servers",
 })
 
 vim.api.nvim_create_user_command("LspLog", function(_)

@@ -13,6 +13,13 @@ local utils = require("utils")
 
 vim.loader.enable()
 
+-- Ensure Mason-managed LSP binaries are findable via $PATH.
+-- Must be set before LSP configs are loaded.
+local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+if vim.uv.fs_stat(mason_bin) then
+  vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
+end
+
 local expected_version = "0.12.3"
 utils.is_compatible_version(expected_version)
 
