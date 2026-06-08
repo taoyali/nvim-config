@@ -69,7 +69,8 @@ if py_env == "uv" then
 end
 
 local rhs = string.format("<cmd>silent %s %%<CR>", py_fmt_cmd)
-vim.keymap.set("n", "<space>f", rhs, {
+vim.keymap.set("n", "<leader>cf", rhs, {
   buffer = true,
   silent = true,
+  desc = "format Python buffer",
 })

@@ -5,7 +5,8 @@ vim.keymap.set("n", "<F9>", "<cmd>luafile %<CR>", {
   buffer = true,
   silent = true,
 })
-vim.keymap.set("n", "<Space>f", "<cmd>silent !stylua %<CR>", {
+vim.keymap.set("n", "<leader>cf", "<cmd>silent !stylua %<CR>", {
   buffer = true,
   silent = true,
+  desc = "format Lua buffer",
 })

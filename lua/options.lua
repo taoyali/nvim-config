@@ -170,8 +170,6 @@ opt.undofile = true
 -- choice, IMHO.
 opt.shortmess:append("cS")
 
-opt.messagesopt = "hit-enter,history:500"
-
 -- Completion behaviour
 opt.completeopt:append("menuone") -- Show menu even if there is only one item
 opt.completeopt:remove("preview") -- Disable the preview window
