@@ -81,7 +81,7 @@ keymap.set("x", ">", ">gv")
 -- Restart nvim
 keymap.set("n", "<leader>sv", function()
   vim.print("Use ZR to restart nvim instead!")
-end)
+end, { desc = "show restart hint" })
 
 keymap.set("n", "ZR", function()
   local current_buf_path = vim.fn.expand("%")

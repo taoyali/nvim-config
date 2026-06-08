@@ -131,7 +131,7 @@ Go to a string starting with `se`
 
 # Shortcuts
 
-Some of the shortcuts I use frequently are listed here. In the following shortcuts, `<leader>` represents ASCII character `,`.
+Some of the shortcuts I use frequently are listed here. In the following shortcuts, `<leader>` represents the Space key.
 
 | Shortcut          | Mode          | platform        | Description                                                              |
 |-------------------|---------------|-----------------|--------------------------------------------------------------------------|
@@ -150,7 +150,7 @@ Some of the shortcuts I use frequently are listed here. In the following shortcu
 | `<leader>y`       | Normal        | Linux/macOS/Win | Copy the content of entire buffer to default register                    |
 | `<leader>cl`      | Normal        | Linux/macOS/Win | Toggle cursor column                                                     |
 | `<leader>cd`      | Normal        | Linux/macOS/Win | Change current working directory to to the dir of current buffer         |
-| `<space>t`        | Normal        | Linux/macOS/Win | Toggle tag window (show project tags in the right window)                |
+| `<leader>t`       | Normal        | Linux/macOS/Win | Toggle tag window (show project tags in the right window)                |
 | `<leader>gs`      | Normal        | Linux/macOS/Win | Show Git status result                                                   |
 | `<leader>gw`      | Normal        | Linux/macOS/Win | Run Git add for current file                                             |
 | `<leader>gc`      | Normal        | Linux/macOS/Win | Run git commit                                                           |

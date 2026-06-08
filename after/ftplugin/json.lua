@@ -1,4 +1,5 @@
-vim.keymap.set({ "n", "v" }, "<space>f", ":JSONFormat<cr>", {
+vim.keymap.set({ "n", "v" }, "<leader>cf", ":JSONFormat<cr>", {
   buffer = true,
   silent = true,
+  desc = "format JSON buffer",
 })

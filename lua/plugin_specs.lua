@@ -346,8 +346,11 @@ local plugin_specs = {
         " Stay in current window when vista window is opened
         let g:vista_stay_on_open = 0
 
-        nnoremap <silent> <Space>t :<C-U>Vista!!<CR>
       ]])
+      vim.keymap.set("n", "<leader>t", "<cmd>Vista!!<CR>", {
+        silent = true,
+        desc = "Toggle tag window",
+      })
     end,
     enabled = function()
       return utils.executable("ctags")
@@ -775,7 +778,9 @@ local plugin_specs = {
   -- file explorer
   {
     "nvim-tree/nvim-tree.lua",
-    keys = { "<space>s" },
+    keys = {
+      { "<leader>e", desc = "toggle nvim-tree" },
+    },
     config = function()
       require("config.nvim-tree")
     end,

@@ -69,11 +69,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
       }
     end)
     map("n", "<C-k>", vim.lsp.buf.signature_help)
-    map("n", "<space>rn", vim.lsp.buf.rename, { desc = "varialbe rename" })
-    map("n", "<space>ca", vim.lsp.buf.code_action, { desc = "LSP code action" })
-    map("n", "<space>wa", vim.lsp.buf.add_workspace_folder, { desc = "add workspace folder" })
-    map("n", "<space>wr", vim.lsp.buf.remove_workspace_folder, { desc = "remove workspace folder" })
-    map("n", "<space>wl", function()
+    map("n", "<leader>lr", vim.lsp.buf.rename, { desc = "variable rename" })
+    map("n", "<leader>la", vim.lsp.buf.code_action, { desc = "LSP code action" })
+    map("n", "<leader>lwa", vim.lsp.buf.add_workspace_folder, { desc = "add workspace folder" })
+    map("n", "<leader>lwr", vim.lsp.buf.remove_workspace_folder, { desc = "remove workspace folder" })
+    map("n", "<leader>lwl", function()
       vim.print(vim.lsp.buf.list_workspace_folders())
     end, { desc = "list workspace folder" })
 
