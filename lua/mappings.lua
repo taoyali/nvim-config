@@ -261,8 +261,12 @@ keymap.set("n", "Q", "q", {
   desc = "Record macro",
 })
 
-keymap.set("n", "<Esc>", function()
-  vim.cmd("fclose!")
+-- Dedicated key to close floating window (safe alternative to remapping <Esc>)
+keymap.set("n", "<leader>fd", function()
+  local win = vim.api.nvim_get_current_win()
+  if vim.api.nvim_win_get_config(win).relative ~= "" then
+    vim.api.nvim_win_close(win, true)
+  end
 end, {
-  desc = "close floating win",
+  desc = "close floating window",
 })

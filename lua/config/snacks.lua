@@ -1,5 +1,4 @@
 require("snacks").setup {
-  -- more beautiful vim.ui.input
   input = {
     enabled = true,
     win = {
@@ -7,6 +6,6 @@ require("snacks").setup {
       backdrop = true,
     },
   },
-  -- more beautiful vim.ui.select
   picker = { enabled = true },
+  terminal = { enabled = false },
 }

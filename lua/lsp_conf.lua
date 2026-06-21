@@ -132,7 +132,7 @@ local enabled_lsp_servers = {
   lua_ls = { exe = "lua-language-server", optional = false },
 
   pyright = { exe = "pyright", optional = false },
-  ruff = { exe = "ruff", optional = false },
+  ruff = { exe = "ruff", optional = true },
 
   sourcekit = { exe = "sourcekit-lsp", optional = true },
   vimls = { exe = "vim-language-server", optional = true },
