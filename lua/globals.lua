@@ -3,10 +3,11 @@ local utils = require("utils")
 local config_path = vim.fn.stdpath("config")
 local python3_path = vim.fs.joinpath(config_path, ".venv/bin/python3")
 if not vim.uv.fs_stat(python3_path) then
-  local msg = string.format(
-    "Python provider missing:\n  create a virtual env under nvim config and install pynvim!"
+  vim.notify(
+    "Python provider missing. Create a virtual env and install pynvim to use Python features.",
+    vim.log.levels.WARN,
+    { title = "Nvim-config", timeout = 3000 }
   )
-  vim.api.nvim_echo({ { msg } }, true, { err = true })
 else
   vim.g.python3_host_prog = python3_path
 end

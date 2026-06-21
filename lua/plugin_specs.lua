@@ -457,18 +457,24 @@ local plugin_specs = {
     end,
   },
   {
-    "NeogitOrg/neogit",
-    dependencies = {
-      "nvim-lua/plenary.nvim", -- required
-      "sindrets/diffview.nvim", -- optional - Diff integration
-      -- Only one of these is needed.
-      "ibhagwan/fzf-lua", -- optional
+    "kdheepak/lazygit.nvim",
+    cmd = {
+      "LazyGit",
+      "LazyGitConfig",
+      "LazyGitCurrentFile",
+      "LazyGitFilter",
+      "LazyGitFilterCurrentFile",
     },
-    event = "User InGitRepo",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
+    keys = {
+      { "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit: open" },
+    },
+    config = function()
+      require("config.lazygit")
+    end,
   },
-
-  -- Better git log display
-  { "rbong/vim-flog", cmd = { "Flog" } },
   {
     "ruifm/gitlinker.nvim",
     event = "User InGitRepo",
@@ -772,6 +778,14 @@ local plugin_specs = {
     opts = {},
     config = function()
       require("config.snacks")
+    end,
+  },
+  -- floating terminal (replaces snacks terminal)
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    config = function()
+      require("config.toggleterm")
     end,
   },
   -- show and trim trailing whitespaces

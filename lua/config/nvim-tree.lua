@@ -36,7 +36,7 @@ nvim_tree.setup {
     auto_open = true,
   },
   update_focused_file = {
-    enable = false,
+    enable = true,
     update_cwd = false,
     ignore_list = {},
   },
@@ -57,7 +57,7 @@ nvim_tree.setup {
   },
   git = {
     enable = true,
-    ignore = true,
+    ignore = false,
     timeout = 400,
   },
   actions = {
@@ -101,4 +101,10 @@ nvim_tree.setup {
 keymap.set("n", "<leader>e", require("nvim-tree.api").tree.toggle, {
   silent = true,
   desc = "toggle nvim-tree",
+})
+keymap.set("n", "<leader>E", function()
+  require("nvim-tree.api").tree.focus()
+end, {
+  silent = true,
+  desc = "focus nvim-tree",
 })
