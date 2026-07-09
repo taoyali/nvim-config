@@ -203,6 +203,16 @@ local plugin_specs = {
     opts = {},
     ft = { "markdown" },
   },
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    keys = {
+      { "<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown: toggle preview" },
+      { "<leader>ms", "<cmd>MarkdownPreviewStop<cr>", desc = "Markdown: stop preview" },
+    },
+    ft = { "markdown" },
+    build = "cd $PWD && yarn install",
+  },
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim", lazy = true },
   { "sainnhe/edge", lazy = true },
