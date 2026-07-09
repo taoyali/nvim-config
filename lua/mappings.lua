@@ -133,6 +133,11 @@ keymap.set(
 -- Copy entire buffer.
 keymap.set("n", "<leader>y", "<cmd>%yank<cr>", { desc = "yank entire buffer" })
 
+-- Copy file path
+keymap.set("n", "<leader>yp", "<cmd>CopyPath absolute<cr>", { desc = "copy absolute path" })
+keymap.set("n", "<leader>yP", "<cmd>CopyPath relative<cr>", { desc = "copy relative path" })
+keymap.set("n", "<leader>yn", "<cmd>CopyPath nameonly<cr>", { desc = "copy file name" })
+
 -- Toggle cursor column
 keymap.set(
   "n",
