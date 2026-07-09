@@ -8,6 +8,14 @@ gs.setup {
     topdelete = { text = "‾" },
     changedelete = { text = "│" },
   },
+  current_line_blame = false, -- off by default; toggle via <leader>hB
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = "eol",
+    delay = 300,
+    ignore_whitespace = false,
+    label = " ❱ ",
+  },
   word_diff = false,
   on_attach = function(bufnr)
     local function map(mode, l, r, opts)
@@ -41,7 +49,8 @@ gs.setup {
     map("n", "<leader>hp", gs.preview_hunk, { desc = "preview hunk" })
     map("n", "<leader>hb", function()
       gs.blame_line { full = true }
-    end, { desc = "blame hunk" })
+    end, { desc = "blame current line" })
+    map("n", "<leader>hB", gs.toggle_current_line_blame, { desc = "toggle virtual text blame" })
   end,
 }
 
