@@ -1,12 +1,3 @@
--- Compute cwd from current buffer at runtime (not at init time).
--- This way "nvim ../project" searches in ../project, not the terminal's cwd.
-local function buf_cwd()
-  local p = vim.fn.expand("%:p")
-  if p == "" then return vim.fn.getcwd() end                    -- unnamed buffer
-  if vim.fn.isdirectory(p) == 1 then return p end               -- netrw directory
-  return vim.fn.fnamemodify(p, ":h")                             -- file's directory
-end
-
 require("fzf-lua").setup {
   defaults = {
     file_icons = "mini",
@@ -29,13 +20,35 @@ require("fzf-lua").setup {
   },
 }
 
--- Must be Lua functions (not <cmd> mappings) so buf_cwd() is evaluated
--- at each invocation, not frozen at init time.
+-- Capture search root once at VimEnter so "nvim a/b/c" searches a/b/c,
+-- but never changes when switching to files in subdirectories.
+-- If the first buffer is a directory (netrw), use that; otherwise use getcwd().
+local search_root
+
+local function set_root()
+  local p = vim.fn.expand("%:p")
+  if p ~= "" and vim.fn.isdirectory(p) == 1 then
+    search_root = p
+  else
+    search_root = vim.fn.getcwd()
+  end
+end
+
+if vim.v.vim_did_enter == 1 then
+  set_root()
+else
+  vim.api.nvim_create_autocmd("VimEnter", {
+    group = vim.api.nvim_create_augroup("nvim_fzf_cwd", { clear = true }),
+    once = true,
+    callback = set_root,
+  })
+end
+
 vim.keymap.set("n", "<leader>ff", function()
-  require("fzf-lua").files({ cwd = buf_cwd() })
+  require("fzf-lua").files({ cwd = search_root })
 end, { desc = "Fuzzy find files" })
 vim.keymap.set("n", "<leader>fg", function()
-  require("fzf-lua").live_grep_native({ cwd = buf_cwd() })
+  require("fzf-lua").live_grep_native({ cwd = search_root })
 end, { desc = "Fuzzy grep files" })
 vim.keymap.set(
   "n",
