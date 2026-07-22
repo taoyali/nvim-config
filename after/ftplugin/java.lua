@@ -35,16 +35,20 @@ end
 table.insert(cmd, "-data")
 table.insert(cmd, workspace_dir)
 
-local jdk_home = "/opt/homebrew/opt/openjdk@23/libexec/openjdk.jdk/Contents/Home"
+-- jdtls itself needs a modern JDK, but this Android/Gradle project should be
+-- imported with JDK 17. Keeping these separate prevents Eclipse Buildship from
+-- accidentally reusing the old Java 8 plugin daemon or a too-new JDK daemon.
+local jdtls_jdk_home = "/opt/homebrew/opt/openjdk@23/libexec/openjdk.jdk/Contents/Home"
+local gradle_jdk_home = "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
 
 jdtls.start_or_attach({
   cmd = cmd,
   root_dir = root_dir,
   -- brew openjdk@23 formula currently provides JDK 25 (>= 21 required by jdtls)
   cmd_env = {
-    JAVA_HOME = jdk_home,
+    JAVA_HOME = jdtls_jdk_home,
     -- Ensure Gradle daemon spawned by Eclipse Buildship uses the correct JDK
-    GRADLE_OPTS = "-Dorg.gradle.java.home=" .. jdk_home,
+    GRADLE_OPTS = "-Dorg.gradle.java.home=" .. gradle_jdk_home,
   },
 
   settings = {
@@ -53,6 +57,13 @@ jdtls.start_or_attach({
         -- "interactive" prompts before re-building Gradle configuration;
         -- "automatic" rebuilds on every change (heavier but more reliable).
         updateBuildConfiguration = "automatic",
+        runtimes = {
+          {
+            name = "JavaSE-17",
+            path = gradle_jdk_home,
+            default = true,
+          },
+        },
       },
       eclipse = {
         downloadSources = true,
@@ -67,7 +78,7 @@ jdtls.start_or_attach({
           -- Without this, it may pick up a stale daemon running Java 8 from
           -- /Library/Internet Plug-Ins/JavaAppletPlugin.plugin.
           java = {
-            home = jdk_home,
+            home = gradle_jdk_home,
           },
         },
       },

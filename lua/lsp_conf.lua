@@ -117,16 +117,12 @@ local enabled_lsp_servers = {
   -- golangci-lint also needs to be installed: https://github.com/golangci/golangci-lint
   golangci_lint_ls = { exe = "golangci-lint-langserver", optional = true },
   gopls = { exe = "gopls", optional = false },
-  -- kotlin_lsp (JetBrains intellij-server) is managed by the kotlin.nvim plugin,
-  -- which enables the client itself on FileType kotlin. Do not enable it here too,
-  -- or two same-named clients race to start. kotlin_language_server below stays as
-  -- a fallback for when intellij-server is unavailable.
+  -- Keep kotlin-language-server enabled as a fallback. JetBrains kotlin-lsp can
+  -- fail independently when its bundled intellij-server build expires; in that
+  -- case this older server still gives basic definition/references support.
   kotlin_language_server = {
     exe = "kotlin-language-server",
     optional = true,
-    condition = function()
-      return not utils.executable("intellij-server")
-    end,
   },
 
   lua_ls = { exe = "lua-language-server", optional = false },
