@@ -1,32 +1,17 @@
 local utils = require("utils")
 local fn = vim.fn
 
--- cache for git states
+local GIT_STATUS_REFRESH_INTERVAL = 30 * 1000
+local GIT_FETCH_INTERVAL = 100 * 60
+
+-- Git 状态由后台任务更新，状态栏只读取缓存。
 local git_status_cache = {
-  fetch_success = false,
   behind_count = 0,
   ahead_count = 0,
+  fetch_running = false,
+  status_running = false,
+  last_fetch_at = 0,
 }
-
-local on_exit_fetch = function(result)
-  if result.code == 0 then
-    git_status_cache.fetch_success = true
-  end
-end
-
-local function handle_numeric_result(cache_key)
-  return function(result)
-    if result.code == 0 then
-      git_status_cache[cache_key] = tonumber(result.stdout:match("(%d+)")) or 0
-    else
-      -- when the git command fails, it usually means there are some changes in your branch. For example, you
-      -- on branchA, for this one, you have upstream branch. Then you changed to branchB, and there is no upstream
-      -- branch, the git rev-list command will error out. In this case, we should clear the cache
-      -- vim.print("Error running git command", result)
-      git_status_cache[cache_key] = 0
-    end
-  end
-end
 
 local async_cmd = function(cmd_str, on_exit)
   local cmd = vim.tbl_filter(function(element)
@@ -36,27 +21,57 @@ local async_cmd = function(cmd_str, on_exit)
   vim.system(cmd, { text = true }, on_exit)
 end
 
-local async_git_status_update = function()
-  -- Fetch the latest changes from the remote repository (replace 'origin' if needed)
-  async_cmd("git fetch origin", on_exit_fetch)
-  if not git_status_cache.fetch_success then
+local function handle_numeric_result(cache_key, on_complete)
+  return function(result)
+    if result.code == 0 then
+      git_status_cache[cache_key] = tonumber(result.stdout:match("(%d+)")) or 0
+    else
+      git_status_cache[cache_key] = 0
+    end
+    on_complete()
+  end
+end
+
+local function update_git_status()
+  if git_status_cache.status_running then
     return
   end
 
-  -- Get the number of commits behind
-  -- the @{upstream} notation is inspired by post: https://www.reddit.com/r/neovim/comments/t48x5i/git_branch_aheadbehind_info_status_line_component/
-  -- note that here we should use double dots instead of triple dots
-  local behind_cmd_str = "git rev-list --count HEAD..@{upstream}"
-  async_cmd(behind_cmd_str, handle_numeric_result("behind_count"))
+  git_status_cache.status_running = true
+  local pending = 2
+  local function on_complete()
+    pending = pending - 1
+    git_status_cache.status_running = pending > 0
+  end
 
-  -- Get the number of commits ahead
-  local ahead_cmd_str = "git rev-list --count @{upstream}..HEAD"
-  async_cmd(ahead_cmd_str, handle_numeric_result("ahead_count"))
+  async_cmd("git rev-list --count HEAD..@{upstream}", handle_numeric_result("behind_count", on_complete))
+  async_cmd("git rev-list --count @{upstream}..HEAD", handle_numeric_result("ahead_count", on_complete))
 end
 
-local function get_git_ahead_behind_info()
-  async_git_status_update()
+local function fetch_origin_if_due()
+  local now = os.time()
+  local elapsed = now - git_status_cache.last_fetch_at
+  if git_status_cache.fetch_running or elapsed < GIT_FETCH_INTERVAL then
+    return
+  end
 
+  git_status_cache.last_fetch_at = now
+  git_status_cache.fetch_running = true
+  async_cmd("git fetch origin", function()
+    git_status_cache.fetch_running = false
+    update_git_status()
+  end)
+end
+
+local function refresh_git_status()
+  fetch_origin_if_due()
+  update_git_status()
+  vim.defer_fn(refresh_git_status, GIT_STATUS_REFRESH_INTERVAL)
+end
+
+vim.schedule(refresh_git_status)
+
+local function get_git_ahead_behind_info()
   local status = git_status_cache
   if not status then
     return ""
