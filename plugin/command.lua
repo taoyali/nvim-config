@@ -1,8 +1,22 @@
 local utils = require("utils")
 
+local function get_current_path()
+  if vim.bo.filetype == "NvimTree" then
+    local ok, nvim_tree_api = pcall(require, "nvim-tree.api")
+    if ok then
+      local node = nvim_tree_api.tree.get_node_under_cursor()
+      if node and node.absolute_path then
+        return node.absolute_path
+      end
+    end
+  end
+
+  return vim.fn.expand("%:p")
+end
+
 -- Copy file path to clipboard
 vim.api.nvim_create_user_command("CopyPath", function(context)
-  local full_path = vim.fn.glob("%:p")
+  local full_path = get_current_path()
 
   local file_path = nil
   if context["args"] == "nameonly" then
@@ -12,7 +26,7 @@ vim.api.nvim_create_user_command("CopyPath", function(context)
   -- get the file path relative to project root
   if context["args"] == "relative" then
     local project_marker = { ".git", "pyproject.toml" }
-    local project_root = vim.fs.root(0, project_marker)
+    local project_root = vim.fs.root(full_path, project_marker)
     if project_root == nil then
       vim.print("can not find project root")
       return
