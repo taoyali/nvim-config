@@ -20,8 +20,8 @@ if vim.uv.fs_stat(mason_bin) then
   vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
 end
 
-local expected_version = "0.12.3"
-utils.is_compatible_version(expected_version)
+local min_version = "0.12.2"
+utils.is_compatible_version(min_version)
 
 -- some global settings
 require("globals")

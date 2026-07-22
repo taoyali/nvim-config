@@ -3,11 +3,9 @@ local utils = require("utils")
 local config_path = vim.fn.stdpath("config")
 local python3_path = vim.fs.joinpath(config_path, ".venv/bin/python3")
 if not vim.uv.fs_stat(python3_path) then
-  vim.notify(
-    "Python provider missing. Create a virtual env and install pynvim to use Python features.",
-    vim.log.levels.WARN,
-    { title = "Nvim-config", timeout = 3000 }
-  )
+  -- Python provider is optional for this config. Avoid emitting a startup warning,
+  -- because early messages force Neovim to wait for "Press any key to continue".
+  vim.g.loaded_python3_provider = 0
 else
   vim.g.python3_host_prog = python3_path
 end
