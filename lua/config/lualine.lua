@@ -38,7 +38,7 @@ end
 
 local async_git_status_update = function()
   -- Fetch the latest changes from the remote repository (replace 'origin' if needed)
-  async_cmd("git fetch origin", on_exit_fetch)
+  -- async_cmd("git fetch origin", on_exit_fetch)
   if not git_status_cache.fetch_success then
     return
   end
