@@ -44,5 +44,11 @@ require("lsp_conf")
 -- diagnostic related config
 require("diagnostic-conf")
 
+-- ctags symbol index: the navigation fallback where LSP is weak (Java)
+require("tags_conf")
+
+-- jump into dependency sources on demand (library symbols the LSP cannot reach)
+require("dep_source")
+
 -- colorscheme settings
 require("ui")

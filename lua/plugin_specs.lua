@@ -53,12 +53,6 @@ local plugin_specs = {
   {
     "neovim/nvim-lspconfig",
   },
-  -- JDTLS client extensions: load jdt:// and .class buffers returned by Java definitions.
-  -- Keep this eager so the BufReadCmd handler exists before `gd` opens a library URI.
-  {
-    "mfussenegger/nvim-jdtls",
-    lazy = false,
-  },
   {
     "williamboman/mason.nvim",
     build = ":MasonUpdate",
@@ -77,58 +71,14 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-  -- JetBrains kotlin-lsp client extensions: decompile/jump into jar:// & jrt://
-  -- library sources, plus inlay hints/folding/call hierarchy.
-  {
-    "AlexandrosAlexiou/kotlin.nvim",
-    ft = { "kotlin" },
-    dependencies = { "williamboman/mason.nvim" },
-    init = function()
-      -- jdtls/kotlin-lsp requires Java 21+. Homebrew openjdk@23 formula
-      -- currently provides JDK 25 (brew tracks the formula name).
-      local jdtls_java_home = "/opt/homebrew/opt/openjdk@23/libexec/openjdk.jdk/Contents/Home"
-
-      local gradle_opts = vim.env.GRADLE_OPTS or ""
-      gradle_opts = vim.trim(gradle_opts .. " -Dorg.gradle.java.home=" .. jdtls_java_home)
-      gradle_opts = vim.trim(gradle_opts .. " -Djdk.lang.Process.launchMechanism=fork")
-
-      vim.env.IJ_JAVA_OPTIONS = vim.trim((vim.env.IJ_JAVA_OPTIONS or "") .. " -Xmx4g")
-      vim.env.GRADLE_OPTS = gradle_opts
-
-      vim.lsp.config("kotlin_lsp", {
-        root_markers = { "settings.gradle", "settings.gradle.kts", "gradlew" },
-        cmd_env = {
-          IJ_JAVA_OPTIONS = "-Xmx4g",
-          JAVA_HOME = jdtls_java_home,
-          GRADLE_OPTS = gradle_opts,
-        },
-        init_options = vim.empty_dict(),
-        before_init = function(params, config)
-          local root_dir = config.root_dir or vim.fn.getcwd()
-          local init_options = vim.tbl_deep_extend("force", config.init_options or {}, {
-            buildTools = {
-              [vim.uri_from_fname(root_dir)] = "gradle",
-            },
-          })
-
-          init_options.defaultSdk = jdtls_java_home
-          init_options.defaultJdk = jdtls_java_home
-
-          config.init_options = init_options
-          params.initializationOptions = init_options
-        end,
-      })
-    end,
-    config = function()
-      local jdtls_java_home = "/opt/homebrew/opt/openjdk@23/libexec/openjdk.jdk/Contents/Home"
-      require("kotlin").setup {
-        root_markers = { "settings.gradle", "settings.gradle.kts", "gradlew" },
-        build_tool = "gradle",
-        jdk_for_symbol_resolution = jdtls_java_home,
-        jvm_args = { "-Xmx4g" }, -- bump to 6g/8g for huge repos if indexing is slow/OOMs
-      }
-    end,
-  },
+  -- Kotlin/Java on Android: no plugin needed. kotlin-language-server is enabled
+  -- from lsp_conf.lua and configured in after/lsp/kotlin_language_server.lua.
+  --
+  -- JetBrains kotlin-lsp + kotlin.nvim were removed after measuring them on this
+  -- repo: kotlin-lsp bundles no intellij.android.* plugins, so it never learns
+  -- AGP's source roots or classpath. It imports and indexes without error, then
+  -- returns nil for every cross-file and library symbol -- see the header of
+  -- after/lsp/kotlin_language_server.lua for the measurements.
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,

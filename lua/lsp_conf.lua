@@ -20,46 +20,69 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set(mode, l, r, opts)
     end
 
-    map("n", "gd", function()
-      vim.lsp.buf.definition {
-        on_list = function(options)
-          -- custom logic to avoid showing multiple definition when you use this style of code:
-          -- `local M.my_fn_name = function() ... end`.
-          -- See also post here: https://www.reddit.com/r/neovim/comments/19cvgtp/any_way_to_remove_redundant_definition_in_lua_file/
+    -- Definition, with a fallback for symbols the server cannot locate.
+    --
+    -- On Android/Gradle projects kotlin-language-server resolves library types
+    -- fine (hover shows them) but has no source location to jump to: its Gradle
+    -- classpath resolver never populates sourceJar, so every dependency entry is
+    -- source-less. Rather than making the user remember a second keymap for
+    -- "symbols that live in a jar", `gd` asks the server first and hands over to
+    -- dep_source only when the answer comes back empty.
+    local function definition_or_dependency_source()
+      local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
 
-          -- vim.print(options.items)
-          local unique_defs = {}
-          local def_loc_hash = {}
+      vim.lsp.buf_request_all(bufnr, "textDocument/definition", params, function(results)
+        local items = {}
 
-          -- each item in options.items contain the location info for a definition provided by LSP server
-          for _, def_location in pairs(options.items) do
-            -- use filename and line number to uniquelly indentify a definition,
-            -- we do not expect/want multiple definition in single line!
-            local hash_key = def_location.filename .. def_location.lnum
-
-            if not def_loc_hash[hash_key] then
-              def_loc_hash[hash_key] = true
-              table.insert(unique_defs, def_location)
+        for client_id, response in pairs(results or {}) do
+          local result = response and response.result
+          if result then
+            -- The spec allows a single Location or an array of them.
+            local locations = (result.uri or result.targetUri) and { result } or result
+            local c = vim.lsp.get_client_by_id(client_id)
+            if c and #locations > 0 then
+              vim.list_extend(items, vim.lsp.util.locations_to_items(locations, c.offset_encoding))
             end
           end
+        end
 
-          options.items = unique_defs
+        if #items == 0 then
+          -- Deferred on purpose: this callback runs in a fast event context,
+          -- where buffer creation and blocking vim.system() calls are unsafe.
+          vim.schedule(function()
+            require("dep_source").goto_dependency_source()
+          end)
+          return
+        end
 
-          -- set the location list
-          ---@diagnostic disable-next-line: param-type-mismatch
-          vim.fn.setloclist(0, {}, " ", options)
-
-          -- open the location list when we have more than 1 definitions found,
-          -- otherwise, jump directly to the definition
-          if #options.items > 1 then
-            vim.cmd.lopen()
-          else
-            vim.cmd([[silent! lfirst]])
+        -- Collapse duplicates reported for one declaration, e.g. the
+        -- `local M.my_fn_name = function() ... end` style in Lua.
+        -- See https://www.reddit.com/r/neovim/comments/19cvgtp/any_way_to_remove_redundant_definition_in_lua_file/
+        local unique_defs = {}
+        local seen = {}
+        for _, item in ipairs(items) do
+          -- filename + line uniquely identifies a definition; two declarations
+          -- never legitimately share one line.
+          local hash_key = item.filename .. item.lnum
+          if not seen[hash_key] then
+            seen[hash_key] = true
+            table.insert(unique_defs, item)
           end
-        end,
-      }
-    end, { desc = "go to definition" })
-    map("n", "<C-]>", vim.lsp.buf.definition)
+        end
+
+        vim.fn.setloclist(0, {}, " ", { title = "LSP definitions", items = unique_defs })
+
+        -- Jump straight there for a single hit; let the user choose otherwise.
+        if #unique_defs > 1 then
+          vim.cmd.lopen()
+        else
+          vim.cmd([[silent! lfirst]])
+        end
+      end)
+    end
+
+    map("n", "gd", definition_or_dependency_source, { desc = "go to definition" })
+    map("n", "<C-]>", definition_or_dependency_source, { desc = "go to definition" })
     map("n", "K", function()
       vim.lsp.buf.hover {
         border = "single",
@@ -72,7 +95,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "<leader>lr", vim.lsp.buf.rename, { desc = "variable rename" })
     map("n", "<leader>la", vim.lsp.buf.code_action, { desc = "LSP code action" })
     map("n", "<leader>lwa", vim.lsp.buf.add_workspace_folder, { desc = "add workspace folder" })
-    map("n", "<leader>lwr", vim.lsp.buf.remove_workspace_folder, { desc = "remove workspace folder" })
+    map(
+      "n",
+      "<leader>lwr",
+      vim.lsp.buf.remove_workspace_folder,
+      { desc = "remove workspace folder" }
+    )
     map("n", "<leader>lwl", function()
       vim.print(vim.lsp.buf.list_workspace_folders())
     end, { desc = "list workspace folder" })
@@ -117,13 +145,20 @@ local enabled_lsp_servers = {
   -- golangci-lint also needs to be installed: https://github.com/golangci/golangci-lint
   golangci_lint_ls = { exe = "golangci-lint-langserver", optional = true },
   gopls = { exe = "gopls", optional = false },
-  -- Keep kotlin-language-server enabled as a fallback. JetBrains kotlin-lsp can
-  -- fail independently when its bundled intellij-server build expires; in that
-  -- case this older server still gives basic definition/references support.
-  kotlin_language_server = {
-    exe = "kotlin-language-server",
-    optional = true,
-  },
+  -- Kotlin is the primary language in the Android repos this config is used on.
+  -- kotlin-language-server is the only server measured to actually resolve
+  -- symbols there -- it extracts the classpath by asking Gradle directly instead
+  -- of going through a project model AGP does not implement. Rationale and
+  -- measurements: after/lsp/kotlin_language_server.lua.
+  --
+  -- Java has no semantic server here on purpose; both candidates fail on AGP, so
+  -- it relies on ctags + treesitter (see tags_conf.lua):
+  --   * jdtls -- Eclipse Buildship cannot read the AGP model, so it emits a
+  --     .classpath with no source folders and no dependencies, then indexes
+  --     nothing.
+  --   * kotlin-lsp -- bundles no intellij.android.* plugins, so it never learns
+  --     AGP's source roots. Imports cleanly, then resolves nothing cross-file.
+  kotlin_language_server = { exe = "kotlin-language-server", optional = false },
 
   lua_ls = { exe = "lua-language-server", optional = false },
 
@@ -131,6 +166,8 @@ local enabled_lsp_servers = {
   ruff = { exe = "ruff", optional = true },
 
   sourcekit = { exe = "sourcekit-lsp", optional = true },
+  -- vtsls provides TypeScript/JavaScript support for React Native's .js/.jsx/.ts/.tsx files.
+  vtsls = { exe = "vtsls", optional = false },
   vimls = { exe = "vim-language-server", optional = true },
   yamlls = { exe = "yaml-language-server", optional = true },
 }
@@ -159,8 +196,8 @@ vim.api.nvim_create_user_command("LspInfo", "checkhealth vim.lsp", {
   desc = "Show LSP Info",
 })
 
-vim.api.nvim_create_user_command("AndroidLspInstall", "MasonInstall jdtls kotlin-lsp", {
-  desc = "Install Android Java/Kotlin LSP servers",
+vim.api.nvim_create_user_command("AndroidLspInstall", "MasonInstall kotlin-lsp", {
+  desc = "Install the Kotlin/Android LSP server",
 })
 
 vim.api.nvim_create_user_command("LspLog", function(_)
