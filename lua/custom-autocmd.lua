@@ -89,7 +89,6 @@ api.nvim_create_autocmd("VimResized", {
   command = "wincmd =",
 })
 
-
 api.nvim_create_autocmd({ "VimEnter" }, {
   group = api.nvim_create_augroup("nvim_tree_dir", { clear = true }),
   callback = function(data)
@@ -101,7 +100,7 @@ api.nvim_create_autocmd({ "VimEnter" }, {
     -- open nvim-tree initialised at the target directory path.
     -- nvim-tree's built-in hijack logic recognises the directory buffer
     -- and replaces it with the file tree.
-    require("nvim-tree.api").tree.open({ path = file })
+    require("nvim-tree.api").tree.open { path = file }
   end,
 })
 
@@ -227,28 +226,49 @@ api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
   end,
 })
 
+-- Keep very large files responsive.
+--
 -- ref: https://vi.stackexchange.com/a/169/15292
+--
+-- That reference sets `eventignore = "all"`, which is both too broad and
+-- irreversible: it is a global option with nothing restoring it, so opening one
+-- large file silently disables *every* autocmd for the rest of the session --
+-- filetype detection, syntax, LSP attach, buffer-local keymaps -- and the only
+-- cure is restarting Neovim.
+--
+-- What actually costs time on a big buffer is undo history, swap writes and
+-- relativenumber redraws, so only those are disabled, per buffer. Treesitter is
+-- left alone on purpose: parsing a 13 000-line Java file measures ~19 ms, so
+-- turning it off buys nothing and costs all highlighting.
 api.nvim_create_autocmd("BufReadPre", {
   group = api.nvim_create_augroup("large_file", { clear = true }),
   pattern = "*",
   desc = "optimize for large file",
   callback = function(ev)
-    local file_size_limit = 524288 -- 0.5MB
-    local f = ev.file
+    -- 2 MB. The previous 0.5 MB threshold caught ordinary sources -- the Android
+    -- SDK's Intent.java is 568 KB -- for no measurable benefit.
+    local file_size_limit = 2 * 1024 * 1024
+    local size = fn.getfsize(ev.file)
 
-    if fn.getfsize(f) > file_size_limit or fn.getfsize(f) == -2 then
-      vim.o.eventignore = "all"
+    -- -2 means the size does not fit in a Number, i.e. definitely huge.
+    if size > file_size_limit or size == -2 then
+      vim.b[ev.buf].large_file = true
 
-      -- show ruler
-      vim.o.ruler = true
+      vim.bo[ev.buf].swapfile = false
+      vim.bo[ev.buf].undolevels = -1
+      vim.bo[ev.buf].bufhidden = "unload"
 
-      --  turning off relative number helps a lot
-      vim.wo.relativenumber = false
-      vim.wo.number = false
-
-      vim.bo.swapfile = false
-      vim.bo.bufhidden = "unload"
-      vim.bo.undolevels = -1
+      -- Window-local options need the buffer to be on screen first.
+      api.nvim_create_autocmd("BufWinEnter", {
+        buffer = ev.buf,
+        once = true,
+        callback = function()
+          vim.wo.relativenumber = false
+          vim.wo.number = false
+          vim.wo.foldenable = false
+          vim.o.ruler = true
+        end,
+      })
     end
   end,
 })
