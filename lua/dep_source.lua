@@ -270,6 +270,53 @@ local function find_sources_jar(basename)
   return matches[1]
 end
 
+--- Source file for a class that lives in the Android SDK's android.jar.
+---
+--- The SDK ships sources as plain files under `sources/android-<api>/`, so there
+--- is nothing to unzip -- but android.jar carries no version in its name, so the
+--- Maven path cannot resolve it. The API level comes from the jar's own directory
+--- (`platforms/android-36/android.jar`).
+---
+--- Directory names do not always match the platform exactly: a platform of
+--- `android-36` may ship its sources as `android-36.1`. So the exact level is
+--- tried first, then any directory whose level starts with it, then the highest
+--- available -- an older SDK's sources are still far more useful than none.
+local function android_sdk_source(compiled_jar, class_path)
+  local sdk_root, api = compiled_jar:match("^(.*)/platforms/android%-([%w%.]+)/android%.jar$")
+  if not sdk_root then
+    return nil
+  end
+
+  local candidates = {}
+  for name, kind in vim.fs.dir(sdk_root .. "/sources") do
+    if kind == "directory" and name:match("^android%-") then
+      table.insert(candidates, name)
+    end
+  end
+
+  -- Exact, then same-major (36 -> 36.1), then newest first.
+  table.sort(candidates, function(a, b)
+    local function rank(n)
+      local level = n:match("^android%-(.+)$") or ""
+      if level == api then
+        return -math.huge
+      end
+      if level:match("^" .. vim.pesc(api)) then
+        return -1e308
+      end
+      return -(tonumber(level:match("^(%d+)")) or 0)
+    end
+    return rank(a) < rank(b)
+  end)
+
+  for _, name in ipairs(candidates) do
+    local path = ("%s/sources/%s/%s.java"):format(sdk_root, name, class_path)
+    if vim.uv.fs_stat(path) then
+      return path, name
+    end
+  end
+end
+
 --- Locate the entry that *declares* `symbol`, when its path cannot be derived.
 ---
 --- Two cases need this. Kotlin does not tie a file name to the types inside it,
@@ -583,11 +630,22 @@ function M.goto_dependency_source()
     return
   end
 
+  -- The Android SDK is not a Maven artifact but does ship sources, as plain
+  -- files needing no extraction. Check before the version-number guard rejects
+  -- android.jar for having no coordinates.
+  local sdk_path, sdk_api = android_sdk_source(compiled, class_path)
+  if sdk_path then
+    open_cached(sdk_path, symbol, root, member)
+    index[fqn] = { jar = compiled, entry = class_path .. ".java", file = sdk_path }
+    write_index(index)
+    notify(("%s.java  (%s)"):format(symbol or fqn, sdk_api))
+    return
+  end
+
   local basename = sources_basename(compiled)
   if not basename then
-    -- SDK and build-generated jars end up here. kls already handles android.jar
-    -- itself (the Android SDK ships sources/, so its own decompile-or-source path
-    -- works); everything else genuinely has no source to fetch.
+    -- Build-generated jars end up here: R.jar, core-lambda-stubs and friends
+    -- carry no coordinates, and no repository will ever serve sources for them.
     notify(
       ("%s lives in %s, which is not a Maven artifact -- no sources to fetch"):format(
         symbol or fqn,
