@@ -50,5 +50,8 @@ require("tags_conf")
 -- jump into dependency sources on demand (library symbols the LSP cannot reach)
 require("dep_source")
 
+-- Android resource navigation (res/ is on no classpath, so no LSP reaches it)
+require("android_res")
+
 -- colorscheme settings
 require("ui")

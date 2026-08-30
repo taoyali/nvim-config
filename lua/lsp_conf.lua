@@ -29,6 +29,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- "symbols that live in a jar", `gd` asks the server first and hands over to
     -- dep_source only when the answer comes back empty.
     local function definition_or_dependency_source()
+      -- Android resources first. This cannot be a fallback: kotlin-language-server
+      -- *does* answer for `R.string.foo` -- it resolves the field in the generated
+      -- R.jar -- so a non-empty result would short-circuit the chain and land in a
+      -- decompiled R class. res/ is not on any classpath, so no server will ever
+      -- offer strings.xml. android_res declines anything that is not a resource
+      -- reference, leaving the normal path untouched.
+      if require("android_res").goto_definition() then
+        return
+      end
+
       local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
 
       vim.lsp.buf_request_all(bufnr, "textDocument/definition", params, function(results)

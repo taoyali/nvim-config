@@ -774,6 +774,12 @@ vim.api.nvim_create_autocmd("FileType", {
     end
 
     vim.keymap.set("n", "gd", function()
+      -- Resources resolve out of res/ with ripgrep, so they never needed the
+      -- server -- no reason to make them wait for it.
+      if require("android_res").goto_definition() then
+        return
+      end
+
       -- If a server has come up in the meantime, prefer it.
       if #vim.lsp.get_clients { bufnr = 0, method = "textDocument/definition" } > 0 then
         vim.lsp.buf.definition()
