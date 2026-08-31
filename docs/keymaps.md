@@ -1,10 +1,110 @@
 # Neovim Keymaps
 
-Generated: 2026-06-06 12:21:55 +0800
+Runtime snapshot generated: 2026-06-06 12:21:55 +0800
+LSP quick reference updated: 2026-08-28
 Config root: `/Users/taoyali/.config/nvim`
 Leader: `<Space>`
 
 This file combines runtime mappings from Neovim with a static source scan. Runtime mappings show what is loaded during headless startup. The source scan catches lazy-loaded, filetype-local, and autocmd-created mappings that may not exist until the related plugin, buffer, or LSP client is active.
+
+## LSP Keymap Quick Reference
+
+`<leader>` is `<Space>`. The mappings in `lua/lsp_conf.lua` are buffer-local and
+are installed when an LSP client attaches. They therefore may not appear in the
+global runtime table until an LSP-backed buffer is open.
+
+Main sources: [`lua/lsp_conf.lua`](../lua/lsp_conf.lua),
+[`lua/config/glance.lua`](../lua/config/glance.lua),
+[`lua/diagnostic-conf.lua`](../lua/diagnostic-conf.lua),
+[`lua/dep_source.lua`](../lua/dep_source.lua), and
+[`lua/android_res.lua`](../lua/android_res.lua).
+
+### Configured on `LspAttach`
+
+| Mode | Key | Action | Scope / notes |
+| --- | --- | --- | --- |
+| Normal | `gd` | Go to definition | Buffer-local. Android resources are resolved first; then LSP definitions are used; if none are returned, dependency-source lookup is used. Multiple LSP definitions open the location list. |
+| Normal | `<C-]>` | Go to definition | Same LSP/resource/dependency fallback chain as `gd`. |
+| Normal | `K` | Show hover documentation | Buffer-local. Uses a single border, max height 20, max width 130, and closes on cursor/buffer/window movement or LSP detach. Ruff hover is disabled so Pyright supplies Python hover. |
+| Normal | `<C-k>` | Show signature help | Buffer-local. |
+| Normal | `<leader>lr` | Rename symbol | `vim.lsp.buf.rename()`. |
+| Normal | `<leader>la` | Code action | `vim.lsp.buf.code_action()`. |
+| Normal | `<leader>lwa` | Add workspace folder | `vim.lsp.buf.add_workspace_folder()`. |
+| Normal | `<leader>lwr` | Remove workspace folder | `vim.lsp.buf.remove_workspace_folder()`. |
+| Normal | `<leader>lwl` | List workspace folders | Prints the folders returned by the active LSP client. |
+
+### LSP navigation and diagnostics helpers
+
+| Mode | Key | Action | Scope / notes |
+| --- | --- | --- | --- |
+| Normal | `<leader>lgd` | Glance definitions | Global mapping from `lua/config/glance.lua`; opens definitions in Glance. |
+| Normal | `<leader>lgr` | Glance references | Global mapping from `lua/config/glance.lua`. |
+| Normal | `<leader>lgi` | Glance implementations | Global mapping from `lua/config/glance.lua`. |
+| Normal | `<leader>gd` | Go to dependency source | Global fallback for library symbols that have no usable LSP source location. |
+| Normal | `<leader>lt` | List Android resource declarations | Lists all translations/qualifiers for the resource under the cursor. |
+| Normal | `<leader>lu` | List Android resource usages | Lists every reference to the resource under the cursor. |
+| Normal | `<leader>db` | Put buffer diagnostics in quickfix | Diagnostics helper; uses the current buffer. |
+| Normal | `<leader>dw` | Put window diagnostics in quickfix | Diagnostics helper; uses diagnostics from opened files in the current window. |
+
+`<leader>lg` itself belongs to LazyGit (`<cmd>LazyGit<cr>`); Glance uses the
+longer `lgd`, `lgr`, and `lgi` mappings. The shared prefix can make the
+which-key display look confusing, but the actions are distinct.
+
+`gd` has a few intentional file/buffer-specific variants:
+
+- Kotlin/Java get an early `gd` `FileType` mapping while
+  `kotlin-language-server` is starting. It tries Android resources first; if a
+  definition-capable LSP client is already available it calls LSP, otherwise it
+  tries exact ctags matches and then dependency-source lookup. `LspAttach`
+  later replaces it with the LSP-first mapping above.
+- XML gets a buffer-local Android-resource `gd` because no LSP attaches to XML.
+- Dependency-source buffers bind both `gd` and `<C-]>` to the next dependency
+  source jump. These buffers are read-only and do not have an LSP client.
+
+### Neovim 0.12 built-in LSP mappings
+
+These are supplied by Neovim itself, not by this config. They are present
+unconditionally, but the underlying operation needs an attached client with
+the corresponding capability. The configured `<leader>` mappings above are the
+preferred mnemonic alternatives.
+
+| Mode | Key | Action |
+| --- | --- | --- |
+| Normal | `grn` | Rename symbol |
+| Normal, Visual | `gra` | Code action |
+| Normal | `grx` | Run code lens |
+| Normal | `grr` | Find references |
+| Normal | `gri` | Go to implementation |
+| Normal | `grt` | Go to type definition |
+| Normal | `gO` | List document symbols |
+| Insert, Select | `<C-S>` | Show signature help |
+
+### Neovim 0.12 built-in diagnostic mappings
+
+These operate on diagnostics published by LSP clients and other diagnostic
+sources. The config also sets the diagnostic float style and automatically
+opens a float on `CursorHold` when the cursor is on a diagnostic.
+
+| Mode | Key | Action |
+| --- | --- | --- |
+| Normal | `[d` / `]d` | Jump to the previous / next diagnostic in the current buffer |
+| Normal | `[D` / `]D` | Jump to the first / last diagnostic in the current buffer |
+| Normal | `<C-W>d` / `<C-W><C-D>` | Show the diagnostic under the cursor |
+
+### LSP-related commands
+
+| Command | Action |
+| --- | --- |
+| `:DepSource` | Jump into the dependency source of the symbol under the cursor. |
+| `:ResDefinition` | Jump to the Android resource under the cursor. |
+| `:ResDeclarations` | List Android resource declarations across qualifiers. |
+| `:ResUsages` | List references to the Android resource under the cursor. |
+| `:LspInfo` | Run `checkhealth vim.lsp`. |
+| `:LspLog` | Open the LSP log file. |
+| `:LspRestart` | Restart LSP clients. |
+| `:AndroidLspInstall` | Install the configured Kotlin/Android LSP package through Mason. |
+| `:LspInlayHints enable` | Enable inlay hints (disabled by default). |
+| `:LspInlayHints disable` | Disable inlay hints. |
 
 ## Runtime Keymaps
 
