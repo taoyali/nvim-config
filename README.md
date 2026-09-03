@@ -111,7 +111,7 @@ For more UI demos, check [here](https://github.com/jdhao/nvim-config/issues/15).
 
 ## Cursor jump via hop.nvim
 
-Go to a string starting with `se`
+Press `<leader>j` to jump to a string starting with `se`.
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/16662357/139459219-8a7e6ac4-1d24-4008-a370-b56773d7cb85.gif" width="800">
@@ -138,6 +138,7 @@ Some of the shortcuts I use frequently are listed here. In the following shortcu
 | `<leader>ff`      | Normal        | Linux/macOS/Win | Fuzzy file searching in a floating window                                |
 | `<leader>fh`      | Normal        | Linux/macOS/Win | Fuzzy help file grepping in a floating window                            |
 | `<leader>fg`      | Normal        | Linux/macOS/Win | Fuzzy project-wide grepping in a floating window                         |
+| `<leader>j`       | Normal/Visual/Operator | Linux/macOS/Win | Hop character-pair jump                                                  |
 | `<leader>ft`      | Normal        | Linux/macOS/Win | Fuzzy buffer tag searching in a floating window                          |
 | `<leader>fb`      | Normal        | Linux/macOS/Win | Fuzzy buffer switching in a floating window                              |
 | `<leader><Space>` | Normal        | Linux/macOS/Win | Remove trailing white spaces                                             |

@@ -259,12 +259,8 @@ keymap.set("n", "<leader>cb", function()
   )
 end, { desc = "show cursor" })
 
-keymap.set("n", "q", function()
-  vim.print("q is remapped to Q in Normal mode!")
-end)
-keymap.set("n", "Q", "q", {
-  desc = "Record macro",
-})
+-- Leave `q` unbound globally so filetype and plugin buffers can use it to
+-- close themselves; Vim's native macro recording remains available as well.
 
 -- Dedicated key to close floating window (safe alternative to remapping <Esc>)
 keymap.set("n", "<leader>fd", function()

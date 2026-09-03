@@ -118,7 +118,9 @@ local plugin_specs = {
   -- Super fast buffer jump
   {
     "smoka7/hop.nvim",
-    keys = { "f" },
+    keys = {
+      { "<leader>j", mode = { "n", "v", "o" }, desc = "Hop: jump to character pair" },
+    },
     config = function()
       require("config.nvim_hop")
     end,

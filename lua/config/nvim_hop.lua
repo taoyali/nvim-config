@@ -7,13 +7,16 @@ hop.setup {
   match_mappings = { "zh_sc" },
 }
 
-keymap.set({ "n", "v", "o" }, "f", "", {
+-- Keep Vim's native `f{char}` motion available.  Hop uses a leader mapping so
+-- it does not intercept the single-key motion in normal, visual, or operator
+-- pending mode.
+keymap.set({ "n", "v", "o" }, "<leader>j", "", {
   silent = true,
   noremap = true,
   callback = function()
     hop.hint_char2()
   end,
-  desc = "nvim-hop char2",
+  desc = "Hop: jump to character pair",
 })
 
 vim.api.nvim_create_autocmd("ColorScheme", {

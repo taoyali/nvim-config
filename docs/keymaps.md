@@ -122,6 +122,7 @@ opens a float on `CursorHold` when the cursor is on a diagnostic.
 | <code>&lt;Space&gt;db</code> | <code>&lt;Lua callback&gt;</code> | put buffer diagnostics to qf | noremap |
 | <code>&lt;Space&gt;dw</code> | <code>&lt;Lua callback&gt;</code> | put window diagnostics to qf | noremap |
 | <code>&lt;Space&gt;e</code> | <code>&lt;Lua callback&gt;</code> | toggle nvim-tree | noremap, expr |
+| <code>&lt;Space&gt;j</code> | <code>&lt;Lua callback&gt;</code> | Hop: jump to character pair | noremap |
 | <code>&lt;Space&gt;p</code> | <code>m`o&lt;Esc&gt;p``</code> | paste below current line | noremap |
 | <code>&lt;Space&gt;q</code> | <code>&lt;Cmd&gt;x&lt;CR&gt;</code> | quit current window | noremap, silent |
 | <code>&lt;Space&gt;sv</code> | <code>&lt;Lua callback&gt;</code> | show restart hint | noremap |
@@ -166,7 +167,6 @@ opens a float on `CursorHold` when the cursor is on a diagnostic.
 | <code>J</code> | <code>&lt;Lua callback&gt;</code> | join lines without moving cursor | noremap |
 | <code>L</code> | <code>g_</code> |  | noremap |
 | <code>N</code> | <code>&lt;Lua callback&gt;</code> |  | noremap, expr |
-| <code>Q</code> | <code>q</code> | Record macro | noremap |
 | <code>Y</code> | <code>y$</code> | :help Y-default | noremap |
 | <code>ZR</code> | <code>&lt;Lua callback&gt;</code> | Restart nvim | noremap, silent |
 | <code>[&lt;Space&gt;</code> | <code>&lt;Lua callback&gt;</code> | Add empty line above cursor | noremap, expr |
@@ -211,7 +211,6 @@ opens a float on `CursorHold` when the cursor is on a diagnostic.
 | <code>^</code> | <code>g^</code> |  | noremap |
 | <code>c</code> | <code>"_c</code> |  | noremap |
 | <code>cc</code> | <code>"_cc</code> |  | noremap |
-| <code>f</code> | <code>&lt;Lua callback&gt;</code> |  | noremap, expr |
 | <code>gB</code> | <code>&lt;Cmd&gt;call buf_utils#GoToBuffer(v:count, "backward")&lt;CR&gt;</code> | go to buffer (backward) | noremap |
 | <code>gJ</code> | <code>&lt;Lua callback&gt;</code> | join lines without moving cursor | noremap |
 | <code>gO</code> | <code>&lt;Lua callback&gt;</code> | vim.lsp.buf.document_symbol() | noremap |
@@ -229,7 +228,6 @@ opens a float on `CursorHold` when the cursor is on a diagnostic.
 | <code>j</code> | <code>v:count == 0 ? 'gj' : 'j'</code> |  | noremap, expr |
 | <code>k</code> | <code>v:count == 0 ? 'gk' : 'k'</code> |  | noremap, expr |
 | <code>n</code> | <code>&lt;Lua callback&gt;</code> |  | noremap, expr |
-| <code>q</code> | <code>&lt;Lua callback&gt;</code> |  | noremap |
 | <code>s</code> | <code></code> |  |  |
 
 ### Insert (`i`)
@@ -427,9 +425,7 @@ lua/mappings.lua:223:keymap.set("i", "<C-E>", "<END>")
 lua/mappings.lua:226:keymap.set("c", "<C-A>", "<HOME>")
 lua/mappings.lua:229:keymap.set("i", "<C-D>", "<DEL>")
 lua/mappings.lua:231:keymap.set("n", "<leader>cb", function()
-lua/mappings.lua:257:keymap.set("n", "q", function()
-lua/mappings.lua:260:keymap.set("n", "Q", "q", {
-lua/mappings.lua:264:keymap.set("n", "<Esc>", function()
+lua/mappings.lua:266:keymap.set("n", "<leader>fd", function()
 lua/lsp_conf.lua:20:      vim.keymap.set(mode, l, r, opts)
 lua/lsp_conf.lua:72:    map("n", "<leader>lr", vim.lsp.buf.rename, { desc = "variable rename" })
 lua/lsp_conf.lua:73:    map("n", "<leader>la", vim.lsp.buf.code_action, { desc = "LSP code action" })
@@ -508,7 +504,7 @@ lua/config/yanky.lua:17:vim.keymap.set("n", "]y", "<Plug>(YankyNextEntry)")
 lua/config/glance.lua:10:vim.keymap.set("n", "<leader>lgd", "<cmd>Glance definitions<cr>", { desc = "Glance definitions" })
 lua/config/glance.lua:11:vim.keymap.set("n", "<leader>lgr", "<cmd>Glance references<cr>", { desc = "Glance references" })
 lua/config/glance.lua:12:vim.keymap.set("n", "<leader>lgi", "<cmd>Glance implementations<cr>", { desc = "Glance implementations" })
-lua/config/nvim_hop.lua:10:keymap.set({ "n", "v", "o" }, "f", "", {
+lua/config/nvim_hop.lua:13:keymap.set({ "n", "v", "o" }, "<leader>j", "", {
 lua/config/which-key.lua:11:  { "<leader>b", group = "buffer" },
 lua/config/which-key.lua:12:  { "<leader>c", group = "code/config" },
 lua/config/which-key.lua:13:  { "<leader>d", group = "diagnostics" },
